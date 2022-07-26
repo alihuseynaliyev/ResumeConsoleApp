@@ -12,7 +12,7 @@ public abstract class AbstractDao {
             e.printStackTrace();
         }
         String url = "jdbc:mysql://localhost:3306/resume";
-        String username = "alinazim";
+        String username = "root";
         String password = "alinazim";
         Connection connection = DriverManager.getConnection(url, username, password);
         return connection;

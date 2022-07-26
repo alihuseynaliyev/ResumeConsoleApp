@@ -1,5 +1,6 @@
 package dao.impl;
 
+import bean.Country;
 import bean.User;
 import dao.inter.AbstractDao;
 import dao.inter.UserDaoInter;
@@ -9,21 +10,40 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UserDaoImpl extends AbstractDao implements UserDaoInter {
+    private User getUser(ResultSet resultSet) throws SQLException {
+        int id = resultSet.getInt("id");
+        String name = resultSet.getString("name");
+        String surname = resultSet.getString("surname");
+        String email = resultSet.getString("email");
+        String phone = resultSet.getString("phone");
+        int nationalityId = resultSet.getInt("nationality_id");
+        int birthPlaceId = resultSet.getInt("birthplace_id");
+        String nationalityStr = resultSet.getString("nationality");
+        String birthPLaceStr = resultSet.getString("birthplace");
+        Date birthDate = resultSet.getDate("birthdate");
+        Country nationality = new Country(nationalityId, null, nationalityStr);
+        Country birthPlace = new Country(birthPlaceId, birthPLaceStr, null);
+
+        return new User(id, name, surname, phone, email, birthDate, nationality, birthPlace);
+    }
+
     @Override
     public List<User> getAll() {
         List<User> list = new ArrayList<>();
 
         try (Connection connection = connection()) {
             Statement statement = connection.createStatement();
-            statement.execute("select * from user");
+            statement.execute("select " +
+                    "u.*," +
+                    "n.nationality, " +
+                    "c.name AS birthplace " +
+                    "from user u " +
+                    "LEFT JOIN country n ON u.nationality_id = n.id " +
+                    "LEFT JOIN country c ON u.birthplace_id = c.id ");
             ResultSet resultSet = statement.getResultSet();
             while (resultSet.next()) {
-                int id = resultSet.getInt("id");
-                String name = resultSet.getString("name");
-                String surname = resultSet.getString("surname");
-                String email = resultSet.getString("email");
-                String phone = resultSet.getString("phone");
-                list.add(new User(id, name, surname, phone, email));
+                User u = getUser(resultSet);
+                list.add(u);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -37,15 +57,17 @@ public class UserDaoImpl extends AbstractDao implements UserDaoInter {
         User u = null;
         try (Connection connection = connection()) {
             Statement statement = connection.createStatement();
-            statement.execute("select * from user where id =" + number);
+            statement.execute("SELECT" +
+                    "u.*," +
+                    "n.nationality," +
+                    "c.name AS birthplace" +
+                    "FROM" +
+                    "USER u" +
+                    "LEFT JOIN country n ON u.nationality_id = n.id" +
+                    "LEFT JOIN country c ON u.birthplace_id = c.id where u.id = " + number);
             ResultSet resultSet = statement.getResultSet();
             while (resultSet.next()) {
-                int id = resultSet.getInt("id");
-                String name = resultSet.getString("name");
-                String surname = resultSet.getString("surname");
-                String email = resultSet.getString("email");
-                String phone = resultSet.getString("phone");
-                u = new User(id, name, surname, phone, email);
+                u = getUser(resultSet);
             }
         } catch (SQLException e) {
             e.printStackTrace();
